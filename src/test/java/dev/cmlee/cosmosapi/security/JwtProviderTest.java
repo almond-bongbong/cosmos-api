@@ -13,8 +13,11 @@ class JwtProviderTest {
 	JwtProvider jwtProvider;
 
 	@Test
-	public void jwtCreateTest() {
+	public void jwtGenerateAndValid() {
 		String token = jwtProvider.generateToken();
+
 		assertNotNull(token);
+		assertTrue(jwtProvider.validateToken(token));
+		assertFalse(jwtProvider.validateToken(token + "a"));
 	}
 }

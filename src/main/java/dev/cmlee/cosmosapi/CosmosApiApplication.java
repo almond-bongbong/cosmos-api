@@ -9,5 +9,4 @@ public class CosmosApiApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(CosmosApiApplication.class, args);
 	}
-
 }
