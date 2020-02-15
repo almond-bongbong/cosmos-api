@@ -1,30 +1,25 @@
 package dev.cmlee.cosmosapi.api.auth.controller;
 
 import dev.cmlee.cosmosapi.api.auth.dto.KakaoProfileDto;
+import dev.cmlee.cosmosapi.api.auth.service.KakaoService;
 import dev.cmlee.cosmosapi.exception.UnAuthorizedException;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
-import java.time.Duration;
-import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-	private final RestTemplateBuilder builder;
+	private final KakaoService kakaoService;
 
 	@PostMapping
 	public ResponseEntity<Void> auth() {
@@ -32,19 +27,15 @@ public class AuthController {
 	}
 
 	@PostMapping("/kakao")
-	@RequestBody(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
-	public ResponseEntity<KakaoProfileDto> signKakao(@RequestParam("accessToken") String accessToken) {
-		RestTemplate template = builder
-				.setConnectTimeout(Duration.ofSeconds(3))
-				.build();
+	public ResponseEntity<KakaoProfileDto> signKakao(@RequestBody @Valid KakaoSignRequest request) {
+		String accessToken = request.getAccessToken();
+		return ResponseEntity.ok(kakaoService.getProfile(accessToken).orElseThrow(UnAuthorizedException::new));
+	}
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Authorization", "Bearer " + accessToken);
-		headers.add("Content-type", MediaType.APPLICATION_FORM_URLENCODED_VALUE + ";charset=utf-8");
-		HttpEntity<Void> request = new HttpEntity<>(headers);
-		KakaoProfileDto kakaoProfileDto = template.postForObject("https://kapi.kakao.com/v2/user/me", request, KakaoProfileDto.class);
-		Optional<KakaoProfileDto> optionalKakaoProfileDto = Optional.ofNullable(kakaoProfileDto);
+	@Getter
+	private static class KakaoSignRequest {
 
-		return ResponseEntity.ok(optionalKakaoProfileDto.orElseThrow(UnAuthorizedException::new));
+		@NotEmpty
+		private String accessToken;
 	}
 }
