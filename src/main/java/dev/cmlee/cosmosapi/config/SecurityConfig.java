@@ -11,6 +11,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private static final String[] AUTH_WHITELIST = {
 			"/v3/api-docs",
+			"/swagger"
 	};
 
 	@Override
@@ -21,6 +22,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.cors()
 				.and()
 				.authorizeRequests()
+					.antMatchers(AUTH_WHITELIST).permitAll()
+					.antMatchers("/auth/kakao").permitAll()
 					.anyRequest().permitAll();
 	}
 }

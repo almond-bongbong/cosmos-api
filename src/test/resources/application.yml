@@ -1,7 +1,0 @@
-spring:
-  swagger-ui:
-    path: /swagger
-
-app:
-  jwt-secret: /"9>9;g*X&4s,t;w2'aM#/'VKG2zSw91,<arO>De{M2SA]'ttkqq]c!Of0#vPI|
-  jwt-expiration-in-ms: 604800000 # 7days
