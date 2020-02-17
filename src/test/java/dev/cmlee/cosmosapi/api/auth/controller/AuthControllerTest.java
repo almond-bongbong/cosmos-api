@@ -1,6 +1,7 @@
 package dev.cmlee.cosmosapi.api.auth.controller;
 
 import org.json.JSONObject;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,7 +22,19 @@ class AuthControllerTest {
 	MockMvc mockMvc;
 
 	@Test
-	public void authKakaoFail() throws Exception {
+	@DisplayName("카카오 로그인 필수 파라미터 누락")
+	public void authKakaoRequiredParamFail() throws Exception {
+		mockMvc.perform(post("/auth/kakao")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{}"))
+				.andDo(print())
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("message").exists());
+	}
+
+	@Test
+	@DisplayName("카카오 로그인 실패")
+	public void authKakaoInvalidTokenFail() throws Exception {
 		String body = new JSONObject()
 				.put("accessToken", "invalidToken")
 				.toString();
