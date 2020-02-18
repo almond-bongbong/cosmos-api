@@ -1,6 +1,6 @@
 package dev.cmlee.cosmosapi.exception.handler;
 
-import dev.cmlee.cosmosapi.common.BasicErrorResponse;
+import dev.cmlee.cosmosapi.exception.BasicErrorResponse;
 import dev.cmlee.cosmosapi.exception.RequiredParameterException;
 import dev.cmlee.cosmosapi.exception.UnAuthorizedException;
 import org.springframework.http.HttpStatus;

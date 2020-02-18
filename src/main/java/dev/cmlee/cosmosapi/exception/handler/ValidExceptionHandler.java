@@ -1,6 +1,6 @@
 package dev.cmlee.cosmosapi.exception.handler;
 
-import dev.cmlee.cosmosapi.common.BasicErrorResponse;
+import dev.cmlee.cosmosapi.exception.BasicErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;

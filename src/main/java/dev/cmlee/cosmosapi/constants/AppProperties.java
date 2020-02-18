@@ -1,4 +1,4 @@
-package dev.cmlee.cosmosapi.common;
+package dev.cmlee.cosmosapi.constants;
 
 import lombok.Getter;
 import lombok.Setter;

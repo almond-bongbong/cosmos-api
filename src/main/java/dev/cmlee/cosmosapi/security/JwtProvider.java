@@ -1,6 +1,6 @@
 package dev.cmlee.cosmosapi.security;
 
-import dev.cmlee.cosmosapi.common.AppProperties;
+import dev.cmlee.cosmosapi.constants.AppProperties;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package dev.cmlee.cosmosapi.common;
+package dev.cmlee.cosmosapi.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
