@@ -1,8 +1,6 @@
 package dev.cmlee.cosmosapi.api.auth.controller;
 
 import org.json.JSONObject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
@@ -13,9 +11,14 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,23 +31,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class AuthControllerTest {
 
-	private WebDriver driver;
-
 	@Autowired
 	MockMvc mockMvc;
 
-	@BeforeEach
-	public void setUp() {
-		System.setProperty("webdriver.chrome.driver", "chromedriver");
-		ChromeOptions options = new ChromeOptions();
-		options.addArguments("headless");
-		driver = new ChromeDriver();
-	}
-
-	@AfterEach
-	public void tearDown() {
-		driver.quit();
-	}
+	@Autowired
+	RestTemplateBuilder restBuilder;
 
 	@Test
 	@DisplayName("카카오 로그인 필수 파라미터 누락")
@@ -76,11 +67,18 @@ class AuthControllerTest {
 	@DisplayName("카카오 로그인")
 	public void getKakaoCode() throws Exception {
 		String code = getKakaoLoginCode();
+		String accessToken = getKakaoAccessTokenByCode(code);
 
 		assertThat(code).isNotEmpty();
+		assertThat(accessToken).isNotEmpty();
 	}
 
 	private String getKakaoLoginCode() throws Exception {
+		System.setProperty("webdriver.chrome.driver", "chromedriver");
+		ChromeOptions options = new ChromeOptions();
+		options.addArguments("headless");
+		WebDriver driver = new ChromeDriver();
+
 		driver.get("https://kauth.kakao.com/oauth/authorize?client_id=c6d95eb1aec9adef110317b2b9d6ea6c&redirect_uri=http://localhost:8080/oauth/kakao&response_type=code");
 
 		WebElement inputEmail = driver.findElement(By.id("id_email_2"));
@@ -115,6 +113,42 @@ class AuthControllerTest {
 				.build()
 				.getQueryParams();
 
+		driver.quit();
+
 		return queryParams.get("code").get(0);
+	}
+
+	public String getKakaoAccessTokenByCode(String code) {
+		RestTemplate template = restBuilder.build();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-type", MediaType.APPLICATION_FORM_URLENCODED_VALUE + ";charset=utf-8");
+
+		MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+		requestBody.add("grant_type", "authorization_code");
+		requestBody.add("client_id", "c6d95eb1aec9adef110317b2b9d6ea6c");
+		requestBody.add("redirect_uri", "http://localhost:8080/oauth/kakao");
+		requestBody.add("code", code);
+
+		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, headers);
+		KakaoTokenResponse response = template.postForObject("https://kauth.kakao.com/oauth/token", request, KakaoTokenResponse.class);
+
+		if (response != null) {
+			return response.getAccess_token();
+		} else {
+			return "";
+		}
+	}
+
+	private static class KakaoTokenResponse {
+		private String access_token;
+
+		private KakaoTokenResponse(String access_token) {
+			this.access_token = access_token;
+		}
+
+		public String getAccess_token() {
+			return access_token;
+		}
 	}
 }
