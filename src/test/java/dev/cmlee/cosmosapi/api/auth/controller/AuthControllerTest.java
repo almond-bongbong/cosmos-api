@@ -1,5 +1,6 @@
 package dev.cmlee.cosmosapi.api.auth.controller;
 
+import dev.cmlee.cosmosapi.common.BaseControllerTest;
 import org.json.JSONObject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,13 +10,9 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -27,15 +24,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class AuthControllerTest {
+class AuthControllerTest extends BaseControllerTest {
 
 	@Autowired
-	MockMvc mockMvc;
-
-	@Autowired
-	RestTemplateBuilder restBuilder;
+	RestTemplate restTemplate;
 
 	@Test
 	@DisplayName("카카오 로그인 필수 파라미터 누락")
@@ -65,19 +57,27 @@ class AuthControllerTest {
 
 	@Test
 	@DisplayName("카카오 로그인")
-	public void getKakaoCode() throws Exception {
+	public void authKakao() throws Exception {
 		String code = getKakaoLoginCode();
 		String accessToken = getKakaoAccessTokenByCode(code);
+		String body = new JSONObject()
+				.put("accessToken", accessToken)
+				.toString();
 
-		assertThat(code).isNotEmpty();
-		assertThat(accessToken).isNotEmpty();
+		mockMvc.perform(post("/auth/kakao")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(body))
+			.andDo(print())
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("accessToken").exists())
+			.andExpect(jsonPath("refreshToken").exists());
 	}
 
 	private String getKakaoLoginCode() throws Exception {
 		System.setProperty("webdriver.chrome.driver", "chromedriver");
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("headless");
-		WebDriver driver = new ChromeDriver();
+		WebDriver driver = new ChromeDriver(options);
 
 		driver.get("https://kauth.kakao.com/oauth/authorize?client_id=c6d95eb1aec9adef110317b2b9d6ea6c&redirect_uri=http://localhost:8080/oauth/kakao&response_type=code");
 
@@ -118,9 +118,7 @@ class AuthControllerTest {
 		return queryParams.get("code").get(0);
 	}
 
-	public String getKakaoAccessTokenByCode(String code) {
-		RestTemplate template = restBuilder.build();
-
+	private String getKakaoAccessTokenByCode(String code) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Content-type", MediaType.APPLICATION_FORM_URLENCODED_VALUE + ";charset=utf-8");
 
@@ -131,7 +129,7 @@ class AuthControllerTest {
 		requestBody.add("code", code);
 
 		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, headers);
-		KakaoTokenResponse response = template.postForObject("https://kauth.kakao.com/oauth/token", request, KakaoTokenResponse.class);
+		KakaoTokenResponse response = restTemplate.postForObject("https://kauth.kakao.com/oauth/token", request, KakaoTokenResponse.class);
 
 		if (response != null) {
 			return response.getAccess_token();
@@ -143,7 +141,10 @@ class AuthControllerTest {
 	private static class KakaoTokenResponse {
 		private String access_token;
 
-		private KakaoTokenResponse(String access_token) {
+		public KakaoTokenResponse() {
+		}
+
+		public KakaoTokenResponse(String access_token) {
 			this.access_token = access_token;
 		}
 

@@ -29,7 +29,9 @@ public class AuthController {
 	@PostMapping("/kakao")
 	public ResponseEntity<KakaoProfileDto> signKakao(@RequestBody @Valid KakaoSignRequest request) {
 		String accessToken = request.getAccessToken();
-		return ResponseEntity.ok(kakaoService.getProfile(accessToken).orElseThrow(UnAuthorizedException::new));
+		KakaoProfileDto profile = kakaoService.getProfile(accessToken).orElseThrow(UnAuthorizedException::new);
+
+		return ResponseEntity.ok(profile);
 	}
 
 	@Getter
